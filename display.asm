@@ -1,75 +1,73 @@
 ; display.asm
-
-extern current_grid
-extern rows
-extern cols
-
 section .data
-    live_char db '*', 0   ; Character representing a live cell
-    dead_char db '.', 0   ; Character representing a dead cell
-    newline db 10         ; Newline character (ASCII 10)
+    live_char db '*'    ; Character for live cell
+    dead_char db '.'    ; Character for dead cell
+    newline db 10       ; Newline character
 
 section .text
-    extern display_grid
-    extern current_grid, rows, cols
+    global display_grid
+    extern current_grid
 
-;----------------------------------------
-; display_grid:
-; Displays the current state of the grid.
-;----------------------------------------
 display_grid:
-    ; rdi - pointer to current_grid
-    ; rsi - number of rows
-    ; rdx - number of columns
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+    push r13
 
-    mov rdi, current_grid  ; Load the address of current_grid
-    mov rsi, [rows]        ; Load the number of rows
-    mov rdx, [cols]        ; Load the number of columns
+    xor r12, r12        ; row counter
 
-    xor rcx, rcx           ; Row index = 0
 .row_loop:
-    xor rbx, rbx           ; Column index = 0
+    xor r13, r13        ; column counter
+
 .col_loop:
-    ; Calculate the offset for the current cell
-    mov rax, rcx
-    imul rax, rdx          ; rax = row_index * cols
-    add rax, rbx           ; rax = rax + col_index
+    ; Calculate cell offset
+    mov rax, r12
+    imul rax, 20
+    add rax, r13
+    
+    ; Get cell state
+    movzx rdx, byte [current_grid + rax]
+    
+    ; Choose character to print
+    test rdx, rdx
+    jz .print_dead
+    
+    ; Print live cell
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [live_char]
+    mov rdx, 1
+    syscall
+    jmp .char_done
 
-    ; Load the cell's state
-    mov al, byte [rdi + rax]
-
-    ; Determine the character to print
-    cmp al, 1
-    je .print_live
-    ; Else, print dead
-    mov rsi, dead_char
-    jmp .print_char
-.print_live:
-    mov rsi, live_char
-.print_char:
-    ; Write the character to stdout
-    mov eax, 1             ; syscall number for sys_write
-    mov edi, 1             ; file descriptor: stdout
-    mov edx, 1             ; number of bytes to write
+.print_dead:
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [dead_char]
+    mov rdx, 1
     syscall
 
-    ; Move to the next column
-    inc rbx
-    cmp rbx, rdx
+.char_done:
+    inc r13
+    cmp r13, 20
     jl .col_loop
 
-    ; Print newline after each row
-    mov eax, 1             ; syscall number for sys_write
-    mov edi, 1             ; file descriptor: stdout
-    mov rsi, newline
-    mov edx, 1             ; number of bytes to write
+    ; Print newline
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [newline]
+    mov rdx, 1
     syscall
 
-    ; Move to the next row
-    inc rcx
-    cmp rcx, rsi
+    inc r12
+    cmp r12, 20
     jl .row_loop
 
+    pop r13
+    pop r12
+    pop rbx
+    pop rbp
     ret
 
-; .section .note.GNU-stack, "", @progbits
+section .note.GNU-stack noalloc noexec nowrite progbits

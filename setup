@@ -1,0 +1,3 @@
+  alias m='cw main.asm'
+  alias g='cw grid.asm'
+  alias d='cw display.asm'
