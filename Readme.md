@@ -2,6 +2,10 @@
 
 A bare-metal implementation of Conway's Game of Life written in x86-64 assembly language. This implementation features a glider pattern that moves diagonally across the screen.
 
+## Demo
+
+![Demo](/resources/AsmLife.gif)
+
 ## Features
 
 - Pure assembly implementation with no C library dependencies
